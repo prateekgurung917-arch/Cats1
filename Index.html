@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Will you be my Valentine? 💘</title>
+    <style>
+        /* Mobile first reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            min-height: 100dvh; /* dynamic viewport for mobile */
+            background: linear-gradient(145deg, #ffe4ec 0%, #ffc1cc 70%, #ffb0c0 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            overflow: hidden;
+            position: relative;
+            touch-action: pan-x pan-y; /* prevent pull-to-refresh interference */
+        }
+
+        /* subtle floating hearts background (mobile optimised) */
+        body::before {
+            content: "❤️❤️❤️❤️❤️❤️";
+            position: absolute;
+            font-size: 3rem;
+            opacity: 0.1;
+            white-space: nowrap;
+            width: 300%;
+            animation: drift 60s linear infinite;
+            pointer-events: none;
+            top: 10%;
+            left: -100%;
+            transform: rotate(-5deg);
+            z-index: 0;
+        }
+
+        @keyframes drift {
+            0% { transform: translateX(0) rotate(-5deg); }
+            100% { transform: translateX(-40%) rotate(-5deg); }
+        }
+
+        /* main card — fits mobile perfectly */
+        .valentine-card {
+            background: rgba(255, 250, 245, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 48px 48px 32px 32px;
+            box-shadow: 0 20px 40px rgba(180, 40, 70, 0.3),
+                        0 0 0 2px #fff9 inset,
+                        0 0 0 5px #ffb7c5 inset;
+            padding: 2rem 1.5rem 2rem 1.5rem;
+            text-align: center;
+            width: 100%;
+            max-width: 480px; /* perfect for mobile */
+            position: relative;
+            z-index: 15;
+            border: 1px solid rgba(255, 240, 245, 0.9);
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 2.4rem;
+            font-weight: 600;
+            color: #a12b4a;
+            text-shadow: 0 3px 8px #ffb8c9, 2px 2px 0 #fff0f5;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.3px;
+            line-height: 1.2;
+        }
+
+        .question {
+            font-size: 2rem;
+            font-weight: 500;
+            color: #c6416b;
+            background: rgba(255, 255, 255, 0.6);
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            border-radius: 60px;
+            backdrop-filter: blur(4px);
+            margin: 0.8rem 0 1.5rem 0;
+            border: 2px solid white;
+            box-shadow: 0 6px 12px #ff98aa50;
+            width: auto;
+        }
+
+        /* button container — relative for absolute positioning of NO */
+        .button-pair {
+            position: relative;
+            height: 140px;  /* fixed height for consistent no-button movement */
+            width: 100%;
+            margin: 1.2rem 0 1rem 0;
+            touch-action: none; /* prevent scrolling while interacting inside */
+        }
+
+        /* both buttons look similar, but NO is movable */
+        .btn {
+            font-size: 2rem;
+            font-weight: 600;
+            padding: 0.8rem 1.8rem;
+            border: none;
+            border-radius: 60px;
+            box-shadow: 0 10px 0 #8f364f, 0 10px 20px rgba(150, 40, 70, 0.5);
+            transition: transform 0.1s, box-shadow 0.15s, left 0.1s ease, top 0.1s ease;
+            letter-spacing: 0.5px;
+            background: #ffd0df;
+            color: #851c3d;
+            border: 2px solid #fff5fa;
+            cursor: pointer;
+            min-width: 140px;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            touch-action: manipulation;
+        }
+
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 4px 0 #8f364f, 0 8px 16px rgba(150, 40, 70, 0.4);
+        }
+
+        .btn-yes {
+            background: #ffb0c7;
+            color: #590c26;
+            box-shadow: 0 10px 0 #aa2e53, 0 12px 20px #c06f8b;
+            position: absolute;
+            left: 5%;  /* will be adjusted with js for centering */
+            top: 10px;
+            z-index: 20;
+        }
+
+        .btn-no {
+            background: #f5cfdb;
+            color: #782b46;
+            box-shadow: 0 10px 0 #ac385b, 0 12px 20px #b35f7a;
+            position: absolute;
+            z-index: 25;
+            left: auto;  /* set by js */
+            right: auto;
+            top: 10px;
+            transition: left 0.1s ease, top 0.1s ease; /* smooth dodge */
+        }
+
+        /* surprise message */
+        .surprise-message {
+            margin-top: 1.5rem;
+            background: rgba(255, 240, 250, 0.9);
+            backdrop-filter: blur(8px);
+            border-radius: 50px;
+            padding: 1.5rem 1.2rem;
+            border: 3px solid white;
+            box-shadow: 0 10px 25px #ff8095;
+            font-size: 1.6rem;
+            font-weight: 500;
+            color: #a12b4a;
+            line-height: 1.5;
+            transition: opacity 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2), transform 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+            opacity: 0;
+            transform: scale(0.6);
+            pointer-events: none;
+            word-break: break-word;
+        }
+
+        .surprise-message.show {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+        }
+
+        .surprise-message span {
+            font-size: 2.5rem;
+            display: inline-block;
+            animation: heartbeat 1.4s infinite;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            30% { transform: scale(1.2); }
+            60% { transform: scale(1.1); }
+        }
+
+        /* HEART BALLOON — moving all around the screen */
+        .heart-balloon {
+            position: absolute;
+            font-size: 4.5rem;
+            filter: drop-shadow(0 15px 12px #ff5f7c);
+            z-index: 40;
+            pointer-events: none;
+            will-change: transform;
+            top: 10%;
+            left: 5%;
+            animation: floatAround 18s infinite alternate ease-in-out;
+            text-shadow: 0 0 10px white;
+        }
+
+        /* balloon string (mobile cute) */
+        .heart-balloon::after {
+            content: "🪢";
+            font-size: 1.8rem;
+            position: absolute;
+            top: 70%;
+            left: 45%;
+            transform: rotate(15deg);
+            color: #b15d6e;
+            opacity: 0.8;
+            white-space: nowrap;
+        }
+
+        @keyframes floatAround {
+            0% { transform: translate(0, 0) rotate(-5deg); }
+            25% { transform: translate(20vw, -15vh) rotate(6deg); }
+            50% { transform: translate(-8vw, -25vh) rotate(-8deg); }
+            75% { transform: translate(15vw, 12vh) rotate(10deg); }
+            100% { transform: translate(-12vw, 5vh) rotate(-3deg); }
+        }
+
+        /* small floating hearts */
+        .floating-hearts {
+            position: absolute;
+            bottom: 15px;
+            right: 10px;
+            font-size: 2.4rem;
+            opacity: 0.6;
+            animation: twinkle 2s infinite alternate;
+            z-index: 5;
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0.4; transform: scale(1); }
+            100% { opacity: 1; transform: scale(1.1); text-shadow: 0 0 15px red; }
+        }
+
+        /* responsive fine-tuning for tiny screens */
+        @media (max-width: 400px) {
+            h1 { font-size: 2rem; }
+            .question { font-size: 1.6rem; padding: 0.5rem 1rem; }
+            .btn { font-size: 1.7rem; padding: 0.7rem 1.2rem; min-width: 120px; }
+            .button-pair { height: 130px; }
+            .heart-balloon { font-size: 3.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- moving heart balloon (visible on mobile) -->
+    <div class="heart-balloon" id="heartBalloon">❤️</div>
+    <div class="floating-hearts">💗 💕 💓</div>
+
+    <main class="valentine-card">
+        <h1>💖 Will you be my Valentine Jena Gurung? 💖</h1>
+        <div class="question">Will you be my Valentine?</div>
+
+        <!-- button area with absolute positioned YES and NO -->
+        <div class="button-pair" id="buttonPair">
+            <button class="btn btn-yes" id="yesButton">YES 💝</button>
+            <button class="btn btn-no" id="noButton">NO 😢</button>
+        </div>
+
+        <!-- secret message (hidden until YES) -->
+        <div class="surprise-message" id="surpriseMsg">
+            <span>❤️</span> Chyajulo!  <span>❤️</span><br>
+            I am happy that you are my Valentine@<br>  💐🌷💐🌷
+        </div>
+    </main>
+
+    <script>
+        (function() {
+            const yesBtn = document.getElementById('yesButton');
+            const noBtn = document.getElementById('noButton');
+            const msgBox = document.getElementById('surpriseMsg');
+            const container = document.getElementById('buttonPair');
+            const heartBalloon = document.getElementById('heartBalloon');
+
+            // Position YES button nicely (centered left third)
+            function placeYesButton() {
+                const containerW = container.offsetWidth;
+                // place YES at 20% width (approx left side)
+                yesBtn.style.left = '8%';
+                yesBtn.style.top = '10px';
+            }
+
+            // set NO button absolute with initial position (centered right)
+            function setInitialNoPosition() {
+                const containerW = container.offsetWidth;
+                const noBtnW = noBtn.offsetWidth;
+                // initial at 60% from left (right side)
+                let leftPos = containerW - noBtnW - 15; // 15px from right edge
+                if (leftPos < containerW * 0.5) leftPos = containerW * 0.6; // fallback
+                noBtn.style.left = leftPos + 'px';
+                noBtn.style.top = '10px';
+            }
+
+            // call after a tick to ensure dimensions
+            setTimeout(() => {
+                placeYesButton();
+                setInitialNoPosition();
+            }, 30);
+
+            // also on resize reposition yes and keep no inside boundaries
+            window.addEventListener('resize', function() {
+                placeYesButton();
+                // after resize, ensure NO button stays within container
+                const contRect = container.getBoundingClientRect();
+                const btnRect = noBtn.getBoundingClientRect();
+                let leftVal = parseFloat(noBtn.style.left) || 0;
+                const maxLeft = contRect.width - btnRect.width;
+                if (leftVal > maxLeft) noBtn.style.left = maxLeft + 'px';
+                if (leftVal < 0) noBtn.style.left = '0px';
+                // keep top within
+                let topVal = parseFloat(noBtn.style.top) || 0;
+                if (topVal < 0) noBtn.style.top = '0px';
+                if (topVal > contRect.height - btnRect.height) {
+                    noBtn.style.top = Math.max(0, contRect.height - btnRect.height) + 'px';
+                }
+            });
+
+            // ----- MOVING NO BUTTON on TOUCH and MOUSE (optimized for mobile) -----
+            function moveNoButton() {
+                const contRect = container.getBoundingClientRect();
+                const btnRect = noBtn.getBoundingClientRect();
+
+                // safe area inside container
+                const maxX = Math.max(0, contRect.width - btnRect.width);
+                const maxY = Math.max(0, contRect.height - btnRect.height);
+
+                if (maxX <= 0 || maxY <= 0) return;
+
+                // random position
+                const newX = Math.random() * maxX;
+                const newY = Math.random() * maxY;
+
+                noBtn.style.left = newX + 'px';
+                noBtn.style.top = newY + 'px';
+            }
+
+            // --- event listeners for mobile touch AND mouse ---
+            noBtn.addEventListener('touchstart', function(e) {
+                e.preventDefault();  // prevent any default scrolling
+                moveNoButton();
+            }, { passive: false });
+
+            noBtn.addEventListener('touchmove', function(e) {
+                e.preventDefault();
+                moveNoButton();
+            }, { passive: false });
+
+            noBtn.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                moveNoButton();  // extra dodge
+            });
+
+            // mouse events for dev / hybrid
+            noBtn.addEventListener('mouseover', moveNoButton);
+            noBtn.addEventListener('mousemove', moveNoButton);
+            noBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                moveNoButton();
+                return false;
+            });
+
+            // YES button reveals message, hides buttons, balloon celebration
+            yesBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                // show message
+                msgBox.classList.add('show');
+
+                // fade out buttons (but keep layout)
+                yesBtn.style.opacity = '0';
+                noBtn.style.opacity = '0';
+                yesBtn.style.pointerEvents = 'none';
+                noBtn.style.pointerEvents = 'none';
+
+                // transform heart balloon into celebration mode
+                heartBalloon.innerHTML = '🎈❤️🎈';
+                heartBalloon.style.animation = 'floatAround 6s infinite alternate ease-in-out';
+                heartBalloon.style.fontSize = '5.2rem';
+                heartBalloon.style.filter = 'drop-shadow(0 20px 20px #ffb347)';
+
+                // sprinkle more hearts dynamically
+                const confettiHeart = document.createElement('div');
+                confettiHeart.className = 'floating-hearts';
+                confettiHeart.style.position = 'absolute';
+                confettiHeart.style.top = '15%';
+                confettiHeart.style.left = '5%';
+                confettiHeart.style.fontSize = '3rem';
+                confettiHeart.style.animation = 'twinkle 0.8s infinite';
+                confettiHeart.innerText = '😍💖💗💝';
+                document.body.appendChild(confettiHeart);
+            });
+
+            // also treat touch on YES
+            yesBtn.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                // programmatically click to trigger same logic
+                yesBtn.click();
+            });
+
+            // ensure no accidental page zoom on double-tap buttons
+            yesBtn.addEventListener('touchend', (e) => e.preventDefault());
+            noBtn.addEventListener('touchend', (e) => e.preventDefault());
+
+            // extra safety: if no button somehow gets clicked (almost impossible now)
+            noBtn.addEventListener('click', (e) => e.preventDefault());
+
+            // for good measure, move no button a bit after initial load
+            setTimeout(() => {
+                if (msgBox.classList.contains('show') === false) {
+                    moveNoButton(); // give it a first dodge
+                }
+            }, 200);
+        })();
+    </script>
+</body>
+</html>
